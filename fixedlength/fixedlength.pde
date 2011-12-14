@@ -65,20 +65,34 @@ void draw () {
 
 
 
-  if (numFrame < banana.length-1) {
-    if (timer < frames[numFrame+1] ) {
-      movie.play();
+
+
+
+  switch (state) {
+  case 0: 
+    movie.pause(); 
+    textSize (30); 
+    text ("Banaaaa", width/2, height/2); 
+    break; 
+
+
+  case 1: 
+  
+  
+    if (numFrame < banana.length-1) {
+      if (timer < frames[numFrame+1] ) {
+        movie.play();
+      } 
+      else {
+        movie.pause();
+      }
     } 
     else {
-      movie.pause();
+      movie.play();
     }
-  } 
-  else {
-    movie.play();
+    text ("naaaaa!", width/2, height/2); 
+    break;
   }
-
-
-
 
 
 
@@ -119,6 +133,7 @@ void movieEvent(Movie movie) {
 //------------------------------------------------------------------
 void mouseClicked () {
 
+  
   if (numFrame < banana.length-1) {
     numFrame++ ;
   } 
@@ -127,15 +142,17 @@ void mouseClicked () {
   }
 
   setFrame (frames[numFrame]);
-  println (numFrame); 
-  /*
+  //println (numFrame); 
+  
+  
+  
   if (state <1) {
    state++;
    } 
    else {
    state = 0;
    }
-   */
+   println ("state is: " + state); 
 }
 
 //-----------------------------------------------------------------
