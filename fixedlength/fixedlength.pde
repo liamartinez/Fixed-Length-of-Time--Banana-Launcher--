@@ -1,4 +1,6 @@
+
 import ddf.minim.*;
+
 /*
 import ddf.minim.signals.*;
  import ddf.minim.analysis.*;
@@ -12,6 +14,8 @@ import processing.serial.*;
 Serial myPort;        
 int switchValue; 
 int lastFrame; 
+int lastByte; 
+
 
 Minim minim;
 AudioPlayer[] baba; 
@@ -27,7 +31,7 @@ int state;
 int timer; 
 
 Banana[] banana; 
-int [] frames;  
+int [] video;  
 String [] splits; 
 
 //-----------------------------------------------------------------
@@ -42,15 +46,17 @@ void setup () {
   myPort = new Serial(this, portName, 9600);
 
   minim = new Minim (this); 
-  baba = new AudioPlayer [14]; 
-  nana = new AudioPlayer [14]; 
+  baba = new AudioPlayer [8]; 
+  nana = new AudioPlayer [8]; 
 
   for (int i = 0; i < baba.length; i++) {
     baba[i] = minim.loadFile ("bananas/baba_" + i + ".aif", 2048);
+    baba[i].pause();
   }
 
   for (int i = 0; i < nana.length; i++) {
     nana[i] = minim.loadFile ("bananas/nana_" + i + ".aif", 2048);
+    nana[i].pause();
   }
 
   String []input = loadStrings ("bananas.csv"); 
@@ -69,18 +75,21 @@ void setup () {
   banana = new Banana [input.length]; 
   //println ("banana is:" + " " + banana.length + " input is " +  input.length); 
 
-  frames = new int [input.length]; 
+  video = new int [input.length]; 
   splits = new String [input.length]; 
 
   for (int i = 1; i < input.length; i++) {
+    println ("number of markers: " + input.length); 
     splits = input[i].split(","); 
     //banana[i].releaseVideo = int(splits[0]);
-    frames[i] =  int(splits[0]);
+    video[i] =  int(splits[0]);
     //banana[i].releaseVideo = int(splits[0]);
 
     //println (lia); 
-    println (frames[i]); 
+    println (video[i]); 
     //println ("releasevideo " + banana[i].releaseVideo);
+
+    //lastByte = 0;
   }
 }
 
@@ -89,67 +98,41 @@ void draw () {
   image(movie, 0, 0, width, height);
   fill(240, 20, 30);
 
-  text(getFrame() + " / " + (getLength() - 1), 10, 30);
+  //text(getFrame() + " / " + (getLength() - 1), 10, 30);
 
   timer = getFrame(); 
 
 
-
+  //println ("switchvalue " + switchValue); 
   switch (state) {
 
   case 0: //restingstate
     movie.pause(); 
     textSize (30); 
-    text ("Banaaaa", width/2, height/2); 
-    if (numFrame < banana.length-1) {   //another looping thing
-      if (timer < frames[numFrame+1] ) {
-        movie.play();
-      } 
-      else {
-        movie.pause();
 
-      }
-    } 
-    else {
-      movie.play();
-      baba[numFrame].play();
-    } 
-    
-    //if the current frame is bigger than 0, and if the old one is still playing
-    if (numFrame > 0) { 
-        if (nana[numFrame-1].isPlaying()) nana[numFrame-1].pause();            
-    } 
-    
-    baba[numFrame].play();
-      
-    //baba[numFrame].trigger();
+
+
+
+
     break; 
 
   case 1: //launching
-    if (numFrame < banana.length-1) {   //another looping thing
-
-      if (timer < frames[numFrame+1] ) {
+    if (numFrame < video.length-1) {   //if the current frame is less than the total 
+      //play video
+      if (timer < video[numFrame+1] ) {   //play the video while its not yet the next one
         movie.play();
-        
       } 
       else {
         movie.pause();
-        
       }
     } 
     else {
       movie.play();
     } 
-    
-    nana[numFrame].play();
-    
-    if (numFrame > 0) { 
-        if (baba[numFrame-1].isPlaying()) baba[numFrame-1].pause();     
-    } 
-    
-    text ("naaaaa!", width/2, height/2);    
+
+
     break;
-  }//close looping thing
+  }
 }
 
 
@@ -159,54 +142,68 @@ void movieEvent(Movie movie) {
 }
 
 //------------------------------------------------------------------
+
+
 void mouseClicked () {
 
-   
-  if (numFrame < banana.length-1) {
-    numFrame++ ;
-  } 
-  else {
-    numFrame = 0;
-  }
-  
+
+  upNum(); 
+
   //create a lastPlayed variable before you enter this
   /*
   numFrame = (int)random (0, baba.length); 
-  if (numFrame != lastFrame) lastFrame = numFrame; 
-  */
+   if (numFrame != lastFrame) lastFrame = numFrame; 
+   */
 
-  setFrame (frames[numFrame]);
-  
-   //save the current frame here 
-   lastFrame = numFrame; 
-   
-   println ("numframe " + numFrame + " last frame " + lastFrame); 
+  setFrame (video[numFrame]);
+  println ("numframe is " + numFrame); 
+  nana[numFrame].rewind();
+  baba[numFrame].rewind();
+
+  //save the current frame here 
+  //lastFrame = numFrame; 
+
+  //println ("numframe " + numFrame + " last frame " + lastFrame); 
   //println (numFrame); 
-
 
 
   if (state <1) {
     state++;
-
-
-  
-
-    
   } 
   else {
     state = 0;
-
   }
+
+  switch (state) {
+
+  case 0: 
+    if (baba[numFrame].position() < baba[numFrame].length()) baba[numFrame].play();
+    //if the current frame is bigger than 0, and if the old one is still playing
+    if (numFrame > 0) { 
+      if (nana[numFrame-1].isPlaying()) nana[numFrame-1].pause();
+    } 
+    else {
+      if (nana[video.length-1].isPlaying()) nana[video.length-1].pause();
+    }
+    break;
+
+  case 1: 
+
+
+    nana[numFrame].play(); 
+    if (numFrame > 0) { 
+      if (baba[numFrame-1].isPlaying()) baba[numFrame-1].pause();
+    } 
+    else {
+      if (baba[video.length-1].isPlaying()) baba[video.length-1].pause();
+    }
+    break;
+  }
+
+
+
   println ("state is: " + state);
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -226,9 +223,9 @@ void keyPressed() {
 
   if (key == 'q') {
     numFrame++ ;
-    
-    for (int i = 0; i<frames.length; i++) {
-      setFrame (frames[numFrame]);
+
+    for (int i = 0; i<video.length; i++) {
+      setFrame (video[numFrame]);
       println (numFrame);
     }
   }
@@ -274,14 +271,86 @@ int getLength() {
 
 //---------------------------------------------------------------------
 
+
 void serialEvent (Serial myPort) {
-  // get the byte:
+
 
   int inByte = myPort.read(); 
-  switchValue = inByte; 
-  // print it:
-  println(inByte);
+  println ("inbyte " + inByte); 
+
+
+ // if (inByte != lastByte) { // begin big loop
+
+    
+    //change State
+    if (inByte == 0 ) {
+      state = 0;
+       
+    }
+    if (inByte == 1 && inByte != lastByte) {
+      state = 1;
+     
+      
+    }
+     
+
+      
+    //increment numFrame
+     upNum(); 
+     
+     /*
+     //set frame and reset audio
+     setFrame (video[numFrame]);
+     nana[numFrame].rewind();
+     baba[numFrame].rewind(); 
+     */
+  
+
+
+  //set lastByte
+ lastByte = inByte;
+  println ("last is: " + lastByte); 
+
+  /*
+  switch (state) {
+   
+   case 0: 
+   if (baba[numFrame].position() < baba[numFrame].length()) baba[numFrame].play();
+   //if the current frame is bigger than 0, and if the old one is still playing
+   if (numFrame > 0) { 
+   if (nana[numFrame-1].isPlaying()) nana[numFrame-1].pause();
+   } 
+   else {
+   if (nana[video.length-1].isPlaying()) nana[video.length-1].pause();
+   }
+   break;
+   
+   case 1: 
+   nana[numFrame].play(); 
+   if (numFrame > 0) { 
+   if (baba[numFrame-1].isPlaying()) baba[numFrame-1].pause();
+   } 
+   else {
+   if (baba[video.length-1].isPlaying()) baba[video.length-1].pause();
+   }
+   break;
+   
+  
+   }
+   */
+   
 }
+
+//---------------------------------------------------------------------
+void upNum() {
+  if (numFrame < banana.length-1) {
+    numFrame++ ;
+  } 
+  else {
+    numFrame = 0;
+  }
+}
+
 
 //---------------------------------------------------------------------
 void stop()
